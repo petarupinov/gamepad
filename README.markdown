@@ -1,23 +1,26 @@
-DIY ARCADE GAMEPAD
+AT90USBKEY GAMEPAD
 ==================
 
-This project is my first attempt in creating USB powered arcade game
-controller. Its going to use Seimitsu LS-40 joystick & two Sanwa
-push-buttons. 
+This port using board atmel boards [AT90USBKEY][1]/[AT90USBKEY2][1]
+based on microcontrollers [AT90USB1287][2], [schematic and hardware guide][3]
 
-I'm not going to use Arduino for this project since it
-can't act like HID device by default. [Teensy][2] is new Arduino-like
-development platform that can emulate any HID device.
+Before flashing the source is needed follow these steps:
 
-To build this project you'll need [CrossPack][1].
+1. Erase microcontroller via JTAG programmer [AVRDragon][4] or [AVR JTAGICE mkII][5] - this will erase bootloader and unlock to reconfigure fuse bits
+2. Reflash bootloader "bl_usb.a90" from the flash memory mass storage device path: "/libraries/bootloader/AVR USB/bl_usb.a90"
+3. Reconfigure fuse bits like as: Extened 0xF3, High 0x99, Low 0xDE
+4. Compile the project and flash hex file via [ATmelFlip][6] for Windows or [dfu-programmer][7] for Linux or MacOSX
 
-I got inspiration for this project from this blog [post][3]. 
 
-Next step is to build some good looking game pad enclosure like
-this [Idiot Box][4].
+There are datas in flash memory and you can show the data when flash this example[AVR273: USB Mass Storage Implementation on megaAVR with USB][8]
+Also you can try all other usb examples
 
-[1]: http://www.obdev.at/products/crosspack/index.html
-[2]: http://www.pjrc.com/teensy/
-[3]: http://tinkerlog.com/2009/05/08/tupperware-arcade-controls/
-[4]: http://slagcoin.com/joystick/example3.html
 
+[1]: http://www.atmel.com/tools/at90usbkey.aspx
+[2]: http://www.atmel.com/images/doc7593.pdf
+[3]: http://www.atmel.com/Images/doc7627.pdf
+[4]: http://www.atmel.com/tools/avrdragon.aspx
+[5]: http://www.atmel.com/tools/avrjtagicemkii.aspx
+[6]: http://www.atmel.com/tools/flip.aspx
+[7]: http://dfu-programmer.github.io/
+[8]: http://www.atmel.com/tools/at90usbkey.aspx?tab=documents
