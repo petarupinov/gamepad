@@ -21,43 +21,20 @@
  * THE SOFTWARE.
  */
 
-#define USB_SERIAL_PRIVATE_INCLUDE
-
 #include "usb_gamepad.h"
 
-/**************************************************************************
- *
- *  Configurable Options
- *
- **************************************************************************/
+#define STR_MANUFACTURER	L"P.UPINOV"
+#define STR_PRODUCT			L"P.UPINOV AVR USB GAMEPAD"
 
-// You can change these to give your code its own name.
-#define STR_MANUFACTURER	L"Martins Grunskis"
-#define STR_PRODUCT		L"Gamepad"
+#define VENDOR_ID		0x0001	//0x16C0
+#define PRODUCT_ID		0x0002	//0x047C
 
 
-// Mac OS-X and Linux automatically load the correct drivers.  On
-// Windows, even though the driver is supplied by Microsoft, an
-// INF file is needed to load the driver.  These numbers need to
-// match the INF file.
-#define VENDOR_ID		0x16C0
-#define PRODUCT_ID		0x047C
-
-
-// USB devices are supposed to implment a halt feature, which is
-// rarely (if ever) used.  If you comment this line out, the halt
-// code will be removed, saving 102 bytes of space (gcc 4.3.0).
-// This is not strictly USB compliant, but works with all major
-// operating systems.
-//#define SUPPORT_ENDPOINT_HALT
-
-
-
-/**************************************************************************
- *
- *  Endpoint Buffer Configuration
- *
- **************************************************************************/
+/*
+===========================================================================
+=   Endpoint Buffer Configuration                                         =
+===========================================================================
+*/
 
 #define ENDPOINT0_SIZE		32
 
@@ -73,24 +50,16 @@ static const uint8_t PROGMEM endpoint_config_table[] = {
 	0
 };
 
-
-/**************************************************************************
- *
- *  Descriptor Data
- *
- **************************************************************************/
-
-// Descriptors are the data that your computer reads when it auto-detects
-// this USB device (called "enumeration" in USB lingo).  The most commonly
-// changed items are editable at the top of this file.  Changing things
-// in here should only be done by those who've read chapter 9 of the USB
-// spec and relevant portions of any USB class specifications!
-
+/*
+===========================================================================
+=   DEVICE DESCRIPTOR                                                     =
+===========================================================================
+*/
 
 static uint8_t PROGMEM device_descriptor[] = {
 	18,					// bLength
 	1,					// bDescriptorType
-	0x00, 0x02,				// bcdUSB
+	0x00, 0x02,			// bcdUSB
 	0,					// bDeviceClass
 	0,					// bDeviceSubClass
 	0,					// bDeviceProtocol
@@ -100,24 +69,29 @@ static uint8_t PROGMEM device_descriptor[] = {
 	0x00, 0x01,				// bcdDevice
 	1,					// iManufacturer
 	2,					// iProduct
-	0,					// iSerialNumber
+	3,					// iSerialNumber
 	1					// bNumConfigurations
 };
 
+/*
+===========================================================================
+=   REPORT DESCRIPTOR                                                     =
+===========================================================================
+*/
 static uint8_t PROGMEM gamepad_hid_report_desc[] = { 
 	0x05, 0x01,        // USAGE_PAGE (Generic Desktop)
 	0x09, 0x05,        // USAGE (Gamepad)
-	0xa1, 0x01,        // COLLECTION (Application)
+	0xA1, 0x01,        // COLLECTION (Application)
 	0x09, 0x01,        //   USAGE (Pointer)
-	0xa1, 0x00,        //   COLLECTION (Physical)
+	0xA1, 0x00,        //   COLLECTION (Physical)
 	0x09, 0x30,        //     USAGE (X)
 	0x09, 0x31,        //     USAGE (Y)
 	0x15, 0x00,        //     LOGICAL_MINIMUM (0)
-	0x26, 0xff, 0x00,  //     LOGICAL_MAXIMUM (255)
+	0x26, 0xFF, 0x00,  //     LOGICAL_MAXIMUM (255)
 	0x75, 0x08,        //     REPORT_SIZE (8)
 	0x95, 0x02,        //     REPORT_COUNT (2)
 	0x81, 0x02,        //     INPUT (Data,Var,Abs)
-	0xc0,              //   END_COLLECTION
+	0xC0,              //   END_COLLECTION
 	0x05, 0x09,        //   USAGE_PAGE (Button)
 	0x19, 0x01,        //   USAGE_MINIMUM (Button 1)
 	0x29, 0x02,        //   USAGE_MAXIMUM (Button 2)
@@ -126,16 +100,23 @@ static uint8_t PROGMEM gamepad_hid_report_desc[] = {
 	0x75, 0x01,        //   REPORT_SIZE (1)
 	0x95, 0x02,        //   REPORT_COUNT (2)
 	0x81, 0x02,        //   INPUT (Data,Var,Abs)
-        0x95, 0x06,        //   REPORT_COUNT (6)
-        0x81, 0x03,        //   INPUT (Constant,Var,Abs)
-	0xc0               // END_COLLECTION
+    0x95, 0x06,        //   REPORT_COUNT (6)
+    0x81, 0x03,        //   INPUT (Constant,Var,Abs)
+	0xC0               // END_COLLECTION
 };
 
-
+/*
+===========================================================================
+=   CONFIGURATION 1 DESCRIPTOR (9+9+9+7)                                  =
+=	CONFIGURATION 	DESCRIPTOR - 9                                        =
+=	INTERFACE		DESCRIPTOR - 9                                        =
+=	ENDPOINT		DESCRIPTOR - 9                                        =
+===========================================================================
+*/
 #define CONFIG1_DESC_SIZE        (9+9+9+7)
 #define GAMEPAD_HID_DESC_OFFSET (9+9)
 static uint8_t PROGMEM config1_descriptor[CONFIG1_DESC_SIZE] = {
-	// configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
+	// configuration descriptor, USB rev2.0 spec. glava 9.6.3, str. 264-266, Tablica 9-10
 	9, 					// bLength;
 	2,					// bDescriptorType;
 	LSB(CONFIG1_DESC_SIZE),			// wTotalLength
@@ -143,39 +124,41 @@ static uint8_t PROGMEM config1_descriptor[CONFIG1_DESC_SIZE] = {
 	1,					// bNumInterfaces
 	1,					// bConfigurationValue
 	0,					// iConfiguration
-	0x80,					// bmAttributes
+	0x80,				// bmAttributes
 	50,					// bMaxPower
-	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+	// interface descriptor, USB rev2.0 spec. glava 9.6.5, page 267-269, Tablica 9-12
 	9,					// bLength
 	4,					// bDescriptorType
-	GAMEPAD_INTERFACE,			// bInterfaceNumber
+	GAMEPAD_INTERFACE,	// bInterfaceNumber
 	0,					// bAlternateSetting
 	1,					// bNumEndpoints
 	0x03,					// bInterfaceClass (0x03 = HID)
 	0x00,					// bInterfaceSubClass (0x00 = No Boot)
 	0x00,					// bInterfaceProtocol (0x00 = No Protocol)
 	0,					// iInterface
-	// HID interface descriptor, HID 1.11 spec, section 6.2.1
+	// HID interface descriptor, HID 1.11 spec, glava 6.2.1
 	9,					// bLength
-	0x21,					// bDescriptorType
-	0x11, 0x01,				// bcdHID
+	0x21,				// bDescriptorType
+	0x11, 0x01,			// bcdHID
 	0,					// bCountryCode
 	1,					// bNumDescriptors
 	0x22,					// bDescriptorType
 	sizeof(gamepad_hid_report_desc),	// wDescriptorLength
 	0,
-	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+	// endpoint descriptor, USB rev2.0 spec. glava 9.6.6, str. 269-271, Tablica 9-13
 	7,					// bLength
 	5,					// bDescriptorType
 	GAMEPAD_ENDPOINT | 0x80,		// bEndpointAddress
-	0x03,					// bmAttributes (0x03=intr)
-	GAMEPAD_SIZE, 0,			// wMaxPacketSize
+	0x03,				// bmAttributes (0x03=intr)
+	GAMEPAD_SIZE, 0,	// wMaxPacketSize
 	10					// bInterval
 };
 
-// If you're desperate for a little extra code memory, these strings
-// can be completely removed if iManufacturer, iProduct, iSerialNumber
-// in the device desciptor are changed to zeros.
+/*
+===========================================================================
+=   STRING DESCRIPTOR                                                     =
+===========================================================================
+*/
 struct usb_string_descriptor_struct {
 	uint8_t bLength;
 	uint8_t bDescriptorType;
@@ -197,8 +180,9 @@ static struct usb_string_descriptor_struct PROGMEM string2 = {
 	STR_PRODUCT
 };
 
-// This table defines which descriptor data is sent for each specific
-// request from the host (in wValue and wIndex).
+
+// Tazi tablica definira koi dannovi desktiptori shte badat izprashtani
+// za specifichni zapitvaniq ot hosta (wValue, wIndex).
 static struct descriptor_list_struct {
 	uint16_t	wValue;
 	uint16_t	wIndex;
@@ -215,14 +199,13 @@ static struct descriptor_list_struct {
 };
 #define NUM_DESC_LIST (sizeof(descriptor_list)/sizeof(struct descriptor_list_struct))
 
+/*
+================
+=  Promenlivi  =
+================
+*/
 
-/**************************************************************************
- *
- *  Variables - these are the only non-stack RAM usage
- *
- **************************************************************************/
-
-// zero when we are not configured, non-zero when enumerated
+// Kogato ne e konfigurirano USB-to, usb_configuration=0.
 static volatile uint8_t usb_configuration = 0;
 
 uint8_t joystick_x = 128;
@@ -232,33 +215,23 @@ uint8_t gamepad_buttons = 0;
 
 static uint8_t gamepad_idle_config = 0;
 
-// protocol setting from the host.  We use exactly the same report
-// either way, so this variable only stores the setting since we
-// are required to be able to report which setting is in use.
 static uint8_t gamepad_protocol = 1;
 
-/**************************************************************************
- *
- *  Public Functions - these are the API intended for the user
- *
- **************************************************************************/
 
-
-// initialize USB
+// Inicializaciq na USB.
 void usb_init(void) {
 	HW_CONFIG();
-	USB_FREEZE();	// enable USB
-	PLL_CONFIG();				// config PLL
-        while (!(PLLCSR & (1<<PLOCK))) ;	// wait for PLL lock
-        USB_CONFIG();				// start USB clock
-        UDCON = 0;				// enable attach resistor
+	USB_FREEZE();	// Razreshavane na USB-to.
+	PLL_CONFIG();	// Izbirane na PLL rejim.
+        while (!(PLLCSR & (1<<PLOCK))) ;	// Izchakvane za zakliuchvane na takta za PLL.
+        USB_CONFIG();				// Razreshavane na OTG i zapochvane na USB taktairaneto.
+        UDCON = 0;				// Razreshavane na enable PULL-UP rezistora na D+ za FULL-SPEED.
 	usb_configuration = 0;
-        UDIEN = (1<<EORSTE)|(1<<SOFE);
+        USB_INTERRUPT_CONFIG();	// Izprashtane na prazni freimove prez 1 milisekunda.
 	sei();
 }
 
-// return 0 if the USB is not configured, or the configuration
-// number selected by the HOST
+// Vrashta 0, ako USB ne e konfigurirano.
 uint8_t usb_configured(void) {
   return usb_configuration;
 }
@@ -280,14 +253,14 @@ int8_t usb_gamepad_send(void) {
 	UENUM = GAMEPAD_ENDPOINT;
 	timeout = UDFNUML + 50;
 	while (1) {
-		// are we ready to transmit?
+		// Proverka, gotovnost za predavane.
 		if (UEINTX & (1<<RWAL)) break;
 		SREG = intr_state;
-		// has the USB gone offline?
+		// Izkliuchvane na USB-to.
 		if (!usb_configuration) return -1;
-		// have we waited too long?
+		// Ako vremeto za izchakvane e prekaleno dalgo.
 		if (UDFNUML == timeout) return -1;
-		// get ready to try checking again
+		// Gotovnost za nova proverka.
 		intr_state = SREG;
 		cli();
 		UENUM = GAMEPAD_ENDPOINT;
@@ -300,11 +273,11 @@ int8_t usb_gamepad_send(void) {
 	return 0;
 }
 
-/**************************************************************************
- *
- *  Private Functions - not intended for general user consumption....
- *
- **************************************************************************/
+/*
+=====================================================
+=  Funkcii, obrabotki na prekasvaniq i zapitvaniq   =
+=====================================================
+*/
 
 ISR(USB_GEN_vect)
 {
@@ -322,7 +295,7 @@ ISR(USB_GEN_vect)
         }
 }
 
-// Misc functions to wait for ready and send/receive packets
+// Drugi funkcii za izchakvane za gotovnost, izprashtane i poluchavane na paketi.
 static inline void usb_wait_in_ready(void)
 {
 	while (!(UEINTX & (1<<TXINI))) ;
@@ -340,10 +313,8 @@ static inline void usb_ack_out(void)
 	UEINTX = ~(1<<RXOUTI);
 }
 
-// USB Endpoint Interrupt - endpoint 0 is handled here.  The
-// other endpoints are manipulated by the user-callable
-// functions, and the start-of-frame interrupt.
-//
+// Prekasvane na USB Kraini tochki - obrabotkata na kraina tochka 0.
+// Ostanalite kraini tochki se manipulirat ot funkciite.
 ISR(USB_COM_vect)
 {
         uint8_t intbits;
@@ -398,12 +369,12 @@ ISR(USB_COM_vect)
 			len = (wLength < 256) ? wLength : 255;
 			if (len > desc_length) len = desc_length;
 			do {
-				// wait for host ready for IN packet
+				// Izchakvane za gotovnost ot hosta za IN paket.
 				do {
 					i = UEINTX;
 				} while (!(i & ((1<<TXINI)|(1<<RXOUTI))));
-				if (i & (1<<RXOUTI)) return;	// abort
-				// send IN packet
+				if (i & (1<<RXOUTI)) return;	// Greshka, ne se izprashta paket.
+				// Izprashtane na IN packet.
 				n = len < ENDPOINT0_SIZE ? len : ENDPOINT0_SIZE;
 				for (i = n; i; i--) {
 					UEDATX = pgm_read_byte(desc_addr++);
@@ -413,6 +384,7 @@ ISR(USB_COM_vect)
 			} while (len || n == ENDPOINT0_SIZE);
 			return;
                 }
+// Obrabotki pri zapitvaniq ot HID protokola.
 		if (bRequest == SET_ADDRESS) {
 			usb_send_in();
 			usb_wait_in_ready();
@@ -446,36 +418,11 @@ ISR(USB_COM_vect)
 		if (bRequest == GET_STATUS) {
 			usb_wait_in_ready();
 			i = 0;
-			#ifdef SUPPORT_ENDPOINT_HALT
-			if (bmRequestType == 0x82) {
-				UENUM = wIndex;
-				if (UECONX & (1<<STALLRQ)) i = 1;
-				UENUM = 0;
-			}
-			#endif
 			UEDATX = i;
 			UEDATX = 0;
 			usb_send_in();
 			return;
 		}
-		#ifdef SUPPORT_ENDPOINT_HALT
-		if ((bRequest == CLEAR_FEATURE || bRequest == SET_FEATURE)
-		  && bmRequestType == 0x02 && wValue == 0) {
-			i = wIndex & 0x7F;
-			if (i >= 1 && i <= MAX_ENDPOINT) {
-				usb_send_in();
-				UENUM = i;
-				if (bRequest == SET_FEATURE) {
-					UECONX = (1<<STALLRQ)|(1<<EPEN);
-				} else {
-					UECONX = (1<<STALLRQC)|(1<<RSTDT)|(1<<EPEN);
-					UERST = (1 << i);
-					UERST = 0;
-				}
-				return;
-			}
-		}
-		#endif
 		if (wIndex == GAMEPAD_INTERFACE) {
 			if (bmRequestType == 0xA1) {
 				if (bRequest == HID_GET_REPORT) {
@@ -519,7 +466,6 @@ ISR(USB_COM_vect)
 			}
 		}
 	}
-	UECONX = (1<<STALLRQ) | (1<<EPEN);	// stall
+	UECONX = (1<<STALLRQ) | (1<<EPEN);	// Spirane.
 }
-
 
