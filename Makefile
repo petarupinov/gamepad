@@ -45,6 +45,7 @@ TARGET = gamepad
 
 
 # List C source files here. (C dependencies are automatically generated.)
+# Describing all ".c" files needed for compilation.
 SRC =	$(TARGET).c \
 	usb_gamepad.c
 
@@ -52,10 +53,12 @@ SRC =	$(TARGET).c \
 # MCU name, you MUST set this to match the board you are using
 # type "make clean" after changing this, so all files will be rebuilt
 #
+# Using microcontroller for AT90USBKEY is AT90USB1287.
 #MCU = at90usb162       # Teensy 1.0
-MCU = atmega32u4        # Teensy 2.0
+#MCU = atmega32u4       # Teensy 2.0
 #MCU = at90usb646       # Teensy++ 1.0
 #MCU = at90usb1286      # Teensy++ 2.0
+MCU = at90usb1287       # AT90USBKEY / AT90USBKEY2
 
 
 # Processor frequency.
@@ -63,7 +66,9 @@ MCU = atmega32u4        # Teensy 2.0
 #   so your program will run at the correct speed.  You should also set this
 #   variable to same clock speed.  The _delay_ms() macro uses this, and many
 #   examples use this variable to calculate timings.  Do not add a "UL" here.
-F_CPU = 16000000
+# AT90USBKEY/AT90USBKEY2 is using 8MHz soldered crystal
+#F_CPU = 16000000
+F_CPU = 8000000
 
 
 # Output format. (can be srec, ihex, binary)
