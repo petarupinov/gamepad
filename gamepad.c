@@ -20,17 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-/*
-F_CPU e konstanta, stoinostta na koqta opredelq koeficienta na delenie 
-na osnovnata rabotna chestota na mikrokontrolera. Ako toi e nastroen 
-da raboti s 8MHz i F_CPU e 1000000UL [Hz], to rabotnata chestota shte 
-bade 8MHz. Ako toi e nastroen da raboti s 8MHz i F_CPU e 8000000UL [Hz],
-to rabotnata chestota shte bade 1MHz. Po podrazbirane F_CPU e definirana 
-sas stoinost 1000000UL, t.e. 1MHz vav faila "util/delay.h", v koito se 
-pravi proverka dali veche e bila definirana konstantata F_CPU s nqkakva 
-stoinost ili ne e imalo definiciq na F_CPU. Failat "delay.h" se namira 
-v poddirektoriqta /util v direktoriqta na instaliraniq WinAVR kompilator.
-*/
+
 #define F_CPU 1000000UL
 
 #include <avr/io.h>
@@ -39,24 +29,24 @@ v poddirektoriqta /util v direktoriqta na instaliraniq WinAVR kompilator.
 
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
 /*
-USBKEY svetodiodi:
+USBKEY led description:
 -------------------------------------
-| svetodiod	| USBKEY izvod	| cvqt	|
+| svetodiod | USBKEY pin  | colour  |
 -------------------------------------
-|	D2		|	PORTD_4		| Red	|
-|	(dolu)	|	PORTD_5		| Green	|
+|   D2      |   PORTD_4   | Red     |
+|   (down)  |   PORTD_5   | Green   |
 -------------------------------------
-|	D5		|	PORTD_6 	| Green	|
-|	(gore)	|	PORTD_7		| Red	|
+|   D5      |   PORTD_6   | Green   |
+|   (up)    |   PORTD_7   | Red     |
 -------------------------------------
 */
 
-// PORTD 4,5,6,7 sa definirani izhodi.
+// PORTD 4,5,6,7 defined pinouts.
 #define LEDs_CONFIG (DDRD  |=  (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7))
 
-// Izgasva vsichki svetodiodi.
+// Turn off all leds.
 #define LEDs_OFF	(PORTD &= ~(1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7))
-// Svetva vsichki svetodiodi.
+// Turn on all leds.
 #define LEDs_ON		(PORTD |=  (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7))
 
 #define LED0_OFF	(PORTD &= ~(1<<PD4)) // LED D2 RED OFF
@@ -69,58 +59,58 @@ USBKEY svetodiodi:
 #define LED3_ON		(PORTD |=  (1<<PD7)) // LED D5 RED ON
 
 /*
-USBKEY joystick:
+USBKEY joystick buttons description:
 ---------------------------------------------------------
-|	buton	| USBKEY izvod	| vanshen PULLUP rezistor	|
+|  button  |  USBKEY pins  |  external PULLUP resistor  |
 ---------------------------------------------------------
-|	SELECT	|	PORTB_5		|			ne				|
-|	LEFT	|	PORTB_6		|			ne				|
-|	UP		|	PORTB_7		|			ne				|
-|	RIGHT	|	PORTE_4		|			ne				|
-|	DOWN	|	PORTE_5		|			ne				|
+|  SELECT  |    PORTB_5    |            no              |
+|  LEFT    |    PORTB_6    |            no              |
+|  UP      |    PORTB_7    |            no              |
+|  RIGHT   |    PORTE_4    |            no              |
+|  DOWN    |    PORTE_5    |            no              |
 ---------------------------------------------------------
 */
 
-#define JOYSTICK_SELECT	(1 << 5)	// PB5=1
-#define JOYSTICK_LEFT	(1 << 6)	// PB6=1
-#define JOYSTICK_UP		(1 << 7)	// PB7=1
-#define JOYSTICK_RIGHT	(1 << 4)	// PE4=1
-#define JOYSTICK_DOWN	(1 << 5)	// PE5=1
+#define JOYSTICK_SELECT (1 << 5)   // PB5=1
+#define JOYSTICK_LEFT   (1 << 6)   // PB6=1
+#define JOYSTICK_UP     (1 << 7)   // PB7=1
+#define JOYSTICK_RIGHT  (1 << 4)   // PE4=1
+#define JOYSTICK_DOWN   (1 << 5)   // PE5=1
 
-// Sadarja PINB=(1<<PB6)+(1<<PB7).
+// PINB=(1<<PB6)+(1<<PB7).
 #define JOYSTICK_PINSB (JOYSTICK_LEFT  | JOYSTICK_UP  )
-// Sadarja PINE=(1<<PE4)+(1<<PE5).
+// PINE=(1<<PE4)+(1<<PE5).
 #define JOYSTICK_PINSE (JOYSTICK_RIGHT | JOYSTICK_DOWN)
 
 /*
 USBKEY buttons:
 ---------------------------------------------------------
-|	buton	| USBKEY izvod	| vanshen PULLUP rezistor	|
+|   buton   |  USBKEY pins  | external pull up resistor |
 ---------------------------------------------------------
-|(1)SELECT	|	PORTB_5		|			ne				|
-|(3)HWB		|	PORTE_2		|			da				|
+|(1)SELECT  |    PORTB_5    |           no              |
+|(3)HWB     |    PORTE_2    |           yes             |
 ---------------------------------------------------------
 */
 
-// Buton 1, sadarja PINB=(1<<PB5).
+// Buton 1, PINB=(1<<PB5).
 #define BUTTON1 JOYSTICK_SELECT
-// Buton 2, sadarja PINE=(1<<PE2).
+// Buton 2, PINE=(1<<PE2).
 #define BUTTON2 (1 << 2)
 
 // JOYSTICK_SELECT + HWB Buton.
 #define BUTTON_PINS	(BUTTON1 | BUTTON2 )
 
-// GLAVNA FUNKCIA.
+// Main function.
 int main(void) {
-// Definicia za posoki i butoni na Gamepad-a.
+// Gamepad button directions.
   uint8_t btn, x, y;
 
-// Nastroika za preddelitelq za 8MHz takt, CLKPR = 0b00000000.
+// Prescaller setup to 8MHz clock, CLKPR = 0b00000000.
   CPU_PRESCALE(0);
 
-// Konfigurirane na PORTD kato izhod.
+// Configure PORTD as output.
   LEDs_CONFIG;
-// Test na svetodiodi ot PORTD.
+// PORTD leds test.
   LED2_ON;
   _delay_ms(250);
   LED2_OFF;
@@ -132,68 +122,65 @@ int main(void) {
   LED0_OFF;
   LED1_ON;
 
-// Razreshavane na vatreshnite izteglqshti rezistori na PORTB.
+// Enable internal pull up resistors on PORTB.
   PORTB = (JOYSTICK_PINSB | BUTTON_PINS);
-// Razreshavane na vatreshnite izteglqshti rezistori na PORTE.
+// Enable internal pull up resistors on PORTE.
   PORTE = (JOYSTICK_PINSE);
 
-// Inicializirashta funkciq za USB-to.
+// USB initialization function.
   usb_init();
-// Izchakvane za konfiguraciq, izchakva hosta da ogovori.
+// Wait for usb configuration, waiting for ready.
   while (!usb_configured());
 
-// Izchakvane na 1 sekunda (nujno vreme na OS za zarejdane na draivari),
-// predi zapochvaneto na bezkrainiq cikal s proverki.
+// Waiting 1 second to OS loading drivers.
   _delay_ms(1000);
 
-// Vechen cikal za proverki.
+// Forever loop.
   while (1) {
-// Inicializirashta stoinost za butoni = 0.
+// Buttons initialization value = 0.
     btn = 0;
-// Inicializirashta stoinost za X,Y osi = 128,
-// srednata tochka ili tochkata O na koordinatnata os.
+// Initialization value for X,Y = 128,
+// Zero point is in the middle 0 - 128 - 255.
     x = y = 128;
 
-// Kontroli - os X: nalqvo i nadqsno.
+// Controls - X: lerf and right.
     if ((PINB & JOYSTICK_LEFT) == 0) {
       x = 0;
     } else if ((PINE & JOYSTICK_RIGHT) == 0) {
       x = 255;
     }
-// Kontroli - os Y: nagore i nadolu.
+// Controls - Y: up and down.
     if ((PINB & JOYSTICK_UP) == 0) {
       y = 0;
     } else if ((PINE & JOYSTICK_DOWN) == 0) {
       y = 255;
     }
 
-// BUTONI 1 i 2, btn vrashta nomera na butona ili dvata zaedno.
-// Proverka za natisnati dvata butona 1 i 2 navednaj.
-	if (((PINB & BUTTON1) == 0) && ((PINE & BUTTON2) == 0)) {
-		btn = 3;						// buton1+buton2
-	}
-	else {
-// Proverka za natisnat buton 1.
-		if ((PINB & BUTTON1) == 0) {	// pinb5 == test BUTTON1
-		btn = 1;					// JOYSTICK SELECT - buton1
-		}
-// Proverka za natisnat buton 2.
-		if ((PINE & BUTTON2) == 0) {	// pine2 == test BUTTON2
-		btn = 2;						// HWB - buton2
-		}
-	}
+// Buttons 1 and 2, btn returns buttons number or both.
+// Check thogether pressed buttons 1 and 2.
+    if (((PINB & BUTTON1) == 0) && ((PINE & BUTTON2) == 0)) {
+      btn = 3;                      // buttons 1 and 2 together pressed
+    } else {
+// Check pressed only button 1.
+      if ((PINB & BUTTON1) == 0) {  // pinb5 == test BUTTON1
+        btn = 1;                    // JOYSTICK SELECT - buton1
+      }
+// Check pressed only button 2.
+      if ((PINE & BUTTON2) == 0) {  // pine2 == test BUTTON2
+        btn = 2;                    // HWB - buton2
+      }
+    }
 
-// Izvikva se funkciqta za predavane na parametri.
+// Call func to send parameters.
     usb_gamepad_action(x, y, btn);
 
-// Ako ima natisnat buton se svetva LED3.
-	if (x != 128 || y != 128 || btn != 0) {
+// If pressed button LED3 is turned on.
+    if (x != 128 || y != 128 || btn != 0) {
       LED3_ON;
-    }
-// Ako nqma natisnat buton ne svetva LED3.
-	else {
+    } else {
+// If no pressed button LED3 is turned off.
       LED3_OFF;
     }
   }
 }
- 
+
